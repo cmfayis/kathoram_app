@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+
+import 'package:kathoram/features/newfeature/auth/controller/auth_controller.dart';
 import '../core/app_colors.dart';
-import 'login_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({Key? key}) : super(key: key);
 
-  void _showConfirmationDialog(BuildContext context, String title, VoidCallback onYes) {
+  void _showConfirmationDialog(
+    BuildContext context,
+    String title,
+    VoidCallback onYes,
+  ) {
     showDialog(
       context: context,
       builder: (context) {
@@ -62,7 +68,7 @@ class ProfileScreen extends StatelessWidget {
         child: OutlinedButton(
           onPressed: onPressed,
           style: OutlinedButton.styleFrom(
-            backgroundColor: const Color(0xFFE3F2FD), 
+            backgroundColor: const Color(0xFFE3F2FD),
             side: const BorderSide(color: AppColors.primaryBlue, width: 1),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
@@ -84,9 +90,11 @@ class ProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final authController = Get.find<AuthController>();
+
     return Scaffold(
       // Using the exact light grey background from the design
-      backgroundColor: const Color(0xFFF4F5F7), 
+      backgroundColor: const Color(0xFFF4F5F7),
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -123,29 +131,51 @@ class ProfileScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-                  
+
                   // 2. The Center Avatar
                   Positioned(
-                    top: 110, // Adjust this to sit perfectly on the curve's peak
+                    top:
+                        110, // Adjust this to sit perfectly on the curve's peak
                     left: 0,
                     right: 0,
-                    child: Center(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.15),
-                              blurRadius: 15,
-                              offset: const Offset(0, 8),
-                            ),
-                          ],
-                        ),
-                        child: const CircleAvatar(
-                          radius: 65,
-                          // Make sure the image covers the circle completely
-                          backgroundImage: NetworkImage(
-                            'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60',
+                    child: Obx(
+                      () => Center(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.15),
+                                blurRadius: 15,
+                                offset: const Offset(0, 8),
+                              ),
+                            ],
+                          ),
+                          child: CircleAvatar(
+                            radius: 65,
+                            backgroundImage:
+                                (authController
+                                        .userProfile
+                                        .value
+                                        ?.profileImage
+                                        .isNotEmpty ??
+                                    false)
+                                ? NetworkImage(
+                                    authController
+                                        .userProfile
+                                        .value!
+                                        .profileImage,
+                                  )
+                                : null,
+                            child:
+                                (authController
+                                        .userProfile
+                                        .value
+                                        ?.profileImage
+                                        .isNotEmpty ??
+                                    false)
+                                ? null
+                                : const Icon(Icons.person, size: 65),
                           ),
                         ),
                       ),
@@ -154,30 +184,38 @@ class ProfileScreen extends StatelessWidget {
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 10),
-            
+
             // User Details
-            const Text(
-              'Isha',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
+            Obx(
+              () => Text(
+                authController.userProfile.value?.name.isNotEmpty == true
+                    ? authController.userProfile.value!.name
+                    : 'Staff User',
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
               ),
             ),
             const SizedBox(height: 6),
-            const Text(
-              '+91 5678 765 884',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.black87,
-                fontWeight: FontWeight.w400,
+            Obx(
+              () => Text(
+                authController.userProfile.value?.email.isNotEmpty == true
+                    ? authController.userProfile.value!.email
+                    : '-',
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Colors.black87,
+                  fontWeight: FontWeight.w400,
+                ),
               ),
             ),
-            
+
             const SizedBox(height: 35),
-            
+
             // Menu Items List
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -190,7 +228,8 @@ class ProfileScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   _buildMenuItem(
-                    icon: Icons.receipt_long, // Changed to match document better
+                    icon:
+                        Icons.receipt_long, // Changed to match document better
                     title: 'Terms and Conditions',
                     onTap: () {},
                   ),
@@ -200,39 +239,25 @@ class ProfileScreen extends StatelessWidget {
                     title: 'Support',
                     onTap: () {},
                   ),
-                  
+
                   const SizedBox(height: 30),
-                  
+
                   // Action Items
                   _buildActionItem(
                     title: 'Delete Account',
                     onTap: () {
-                      _showConfirmationDialog(
-                        context,
-                        'Delete Account',
-                        () {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(builder: (context) => const LoginScreen()),
-                          );
-                        },
-                      );
+                      _showConfirmationDialog(context, 'Delete Account', () {
+                        authController.deleteAccount();
+                      });
                     },
                   ),
                   const SizedBox(height: 16),
                   _buildActionItem(
                     title: 'Logout',
                     onTap: () {
-                      _showConfirmationDialog(
-                        context,
-                        'Log Out',
-                        () {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(builder: (context) => const LoginScreen()),
-                          );
-                        },
-                      );
+                      _showConfirmationDialog(context, 'Log Out', () {
+                        authController.logout();
+                      });
                     },
                   ),
                   const SizedBox(height: 40),
@@ -258,7 +283,10 @@ class ProfileScreen extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(30), // Pill shape
-          border: Border.all(color: AppColors.primaryBlue.withOpacity(0.4), width: 1),
+          border: Border.all(
+            color: AppColors.primaryBlue.withOpacity(0.4),
+            width: 1,
+          ),
         ),
         child: Row(
           children: [
@@ -274,7 +302,11 @@ class ProfileScreen extends StatelessWidget {
                 ),
               ),
             ),
-            const Icon(Icons.play_arrow, color: AppColors.primaryBlue, size: 18),
+            const Icon(
+              Icons.play_arrow,
+              color: AppColors.primaryBlue,
+              size: 18,
+            ),
           ],
         ),
       ),
@@ -294,7 +326,10 @@ class ProfileScreen extends StatelessWidget {
           color: Colors.white,
           borderRadius: BorderRadius.circular(30), // Pill shape
           // Subtle red border exactly like the image
-          border: Border.all(color: const Color(0xFFFF4B4B).withOpacity(0.6), width: 1),
+          border: Border.all(
+            color: const Color(0xFFFF4B4B).withOpacity(0.6),
+            width: 1,
+          ),
         ),
         child: Center(
           child: Text(
@@ -316,22 +351,24 @@ class _ProfileArchClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
     final path = Path();
-    
+
     // Start at top left
     path.lineTo(0, 0);
-    
+
     // Draw line down to the bottom left edge
     path.lineTo(0, size.height);
 
     // Curve upwards into a hill in the center, and back down to the right edge
     path.quadraticBezierTo(
-      size.width / 2, size.height - 110, // The control point pulls the curve UP
-      size.width, size.height             // Ends at the bottom right edge
+      size.width / 2,
+      size.height - 110, // The control point pulls the curve UP
+      size.width,
+      size.height, // Ends at the bottom right edge
     );
 
     // Draw line up to top right
     path.lineTo(size.width, 0);
-    
+
     path.close();
     return path;
   }

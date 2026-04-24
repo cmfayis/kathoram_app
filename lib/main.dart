@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'screens/splash_screen.dart';
 
-void main() {
+import 'local_storage/shared_pref.dart';
+import 'routes/route_pages.dart';
+import 'routes/route_path.dart';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await MySharedPref.init();
   runApp(const KathoramApp());
 }
 
@@ -11,7 +17,7 @@ class KathoramApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return GetMaterialApp(
       title: 'Kathoram',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
@@ -24,7 +30,8 @@ class KathoramApp extends StatelessWidget {
           iconTheme: IconThemeData(color: Colors.black),
         ),
       ),
-      home: const SplashScreen(),
+      initialRoute: RoutePath.initial,
+      getPages: RoutePages.routes,
     );
   }
 }

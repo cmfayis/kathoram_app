@@ -1,7 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:kathoram/screens/main_layout.dart';
+import 'package:get/get.dart';
+import 'package:kathoram/routes/route_path.dart';
 
 class ApprovalPendingScreen extends StatefulWidget {
   const ApprovalPendingScreen({Key? key}) : super(key: key);
@@ -11,13 +12,10 @@ class ApprovalPendingScreen extends StatefulWidget {
 }
 
 class _ApprovalPendingScreenState extends State<ApprovalPendingScreen> {
-
   @override
   void initState() {
     Timer(const Duration(seconds: 4), () {
-      Navigator.of(
-        context,
-      ).pushReplacement(MaterialPageRoute(builder: (_) => const MainLayout()));
+      Get.offAllNamed(RoutePath.bottomNav);
     });
     super.initState();
   }
@@ -26,15 +24,14 @@ class _ApprovalPendingScreenState extends State<ApprovalPendingScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       // Light grey background for the whole screen
-      backgroundColor: const Color(0xFFF4F5F7), 
-      
+      backgroundColor: const Color(0xFFF4F5F7),
+
       // Custom Bottom Navigation Bar
-      
       body: Column(
         children: [
           // 1. The Top Curved Header
           const _SmallCurvedHeader(),
-          
+
           // 2. The Centered Approval Card
           Expanded(
             child: Center(
@@ -42,7 +39,10 @@ class _ApprovalPendingScreenState extends State<ApprovalPendingScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 24.0),
                 child: Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 50.0, horizontal: 30.0),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 50.0,
+                    horizontal: 30.0,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFEBEBEB), // Card background color
                     borderRadius: BorderRadius.circular(20),
@@ -57,7 +57,7 @@ class _ApprovalPendingScreenState extends State<ApprovalPendingScreen> {
                         color: Colors.black87,
                       ),
                       SizedBox(height: 25),
-                      
+
                       // Title
                       Text(
                         'Approval Pending',
@@ -68,7 +68,7 @@ class _ApprovalPendingScreenState extends State<ApprovalPendingScreen> {
                         ),
                       ),
                       SizedBox(height: 15),
-                      
+
                       // Subtitle text
                       Text(
                         'Your Request For Executive\nAccess Is Pending, Please Wait\nTill Accepting the Request',
@@ -110,9 +110,7 @@ class _SmallCurvedHeader extends StatelessWidget {
         color: const Color(0xFF2B80FF), // Primary blue
         child: SafeArea(
           bottom: false,
-          child: Center(
-            child: Image.asset('assets/png/Group 21128.png')
-          ),
+          child: Center(child: Image.asset('assets/png/Group 21128.png')),
         ),
       ),
     );
@@ -125,12 +123,14 @@ class _SmallHeaderClipper extends CustomClipper<Path> {
   Path getClip(Size size) {
     final path = Path();
     path.lineTo(0, size.height - 30);
-    
+
     path.quadraticBezierTo(
-      size.width / 2, size.height + 10, 
-      size.width, size.height - 30
+      size.width / 2,
+      size.height + 10,
+      size.width,
+      size.height - 30,
     );
-    
+
     path.lineTo(size.width, 0);
     path.close();
     return path;
@@ -139,4 +139,3 @@ class _SmallHeaderClipper extends CustomClipper<Path> {
   @override
   bool shouldReclip(CustomClipper<Path> oldClipper) => false;
 }
-

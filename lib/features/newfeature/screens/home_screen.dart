@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:kathoram/core/app_colors.dart';
+import 'package:kathoram/features/newfeature/core/app_colors.dart';
 
 // Assuming you have this imported in your real project
 // import '../core/app_colors.dart';

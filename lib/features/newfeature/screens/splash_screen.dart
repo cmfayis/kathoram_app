@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:kathoram/local_storage/shared_pref.dart';
+import 'package:kathoram/routes/route_path.dart';
 
 // Make sure these imports match your actual project structure
 import '../core/app_colors.dart';
-import 'login_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -17,11 +19,9 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    // Navigate to Login after 4 seconds
     Timer(const Duration(seconds: 4), () {
-      Navigator.of(
-        context,
-      ).pushReplacement(MaterialPageRoute(builder: (_) => const LoginScreen()));
+      final isLoggedIn = MySharedPref.getLoggedInStatus();
+      Get.offAllNamed(isLoggedIn ? RoutePath.bottomNav : RoutePath.signIn);
     });
   }
 
@@ -47,15 +47,12 @@ class _SplashScreenState extends State<SplashScreen> {
             child: const _SplashScreenCircles(),
           ),
           // Center Logo Area
-          Center(
-            child: Image.asset('assets/png/AI_Image 1.png'),
-          ),
+          Center(child: Image.asset('assets/png/AI_Image 1.png')),
         ],
       ),
     );
   }
 }
-
 
 /// Widget to hold the custom painter for the rings
 class _SplashScreenCircles extends StatelessWidget {
