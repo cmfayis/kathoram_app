@@ -1,11 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'package:kathoram/features/newfeature/auth/controller/auth_controller.dart';
 import '../core/app_colors.dart';
 
 class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({Key? key}) : super(key: key);
+  const ProfileScreen({super.key});
+
+  // TODO: Update these URLs with your actual website links
+  static const String _privacyPolicyUrl = 'https://kathoram.com/privacy-policy';
+  static const String _termsUrl = 'https://kathoram.com/terms-and-conditions';
+  // TODO: Update with your actual support WhatsApp number (with country code, no +)
+  static const String _supportWhatsAppNumber = '911234567890';
+  static const String _supportMessage =
+      'Hi, I need help with the Kathoram app.';
+
+  Future<void> _launchUrl(String url) async {
+    final uri = Uri.parse(url);
+    // if (await canLaunchUrl(uri)) {
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+    // }
+  }
+
+  Future<void> _openWhatsApp() async {
+    final encodedMessage = Uri.encodeComponent(_supportMessage);
+    final whatsappUrl =
+        'https://wa.me/$_supportWhatsAppNumber?text=$encodedMessage';
+    await _launchUrl(whatsappUrl);
+  }
 
   void _showConfirmationDialog(
     BuildContext context,
@@ -100,7 +123,7 @@ class ProfileScreen extends StatelessWidget {
           children: [
             // Header and Avatar Stack
             SizedBox(
-              height: 290,
+              height: 250,
               child: Stack(
                 clipBehavior: Clip.none,
                 children: [
@@ -224,23 +247,23 @@ class ProfileScreen extends StatelessWidget {
                   _buildMenuItem(
                     icon: Icons.security,
                     title: 'Privacy Policy',
-                    onTap: () {},
+                    onTap: () => _launchUrl(_privacyPolicyUrl),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 9),
                   _buildMenuItem(
                     icon:
                         Icons.receipt_long, // Changed to match document better
                     title: 'Terms and Conditions',
-                    onTap: () {},
+                    onTap: () => _launchUrl(_termsUrl),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 9),
                   _buildMenuItem(
                     icon: Icons.support_agent,
                     title: 'Support',
-                    onTap: () {},
+                    onTap: () => _openWhatsApp(),
                   ),
 
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 9),
 
                   // Action Items
                   _buildActionItem(
@@ -251,7 +274,7 @@ class ProfileScreen extends StatelessWidget {
                       });
                     },
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 9),
                   _buildActionItem(
                     title: 'Logout',
                     onTap: () {

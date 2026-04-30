@@ -44,6 +44,16 @@ dependencies:
   get: ^4.6.6
   intl: ^0.20.1
   image_picker: ^1.1.2
+  url_launcher: ^6.2.5
+  zego_uikit_prebuilt_call: 4.23.1
+  zego_uikit_signaling_plugin: 2.8.21
+  permission_handler: ^12.0.1
+  socket_io_client: ^2.0.3+1
+  firebase_core: ^4.7.0
+  firebase_crashlytics: ^5.2.0
+  firebase_messaging: ^16.2.0
+  flutter_local_notifications: ^19.2.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

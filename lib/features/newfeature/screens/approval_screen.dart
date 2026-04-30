@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:kathoram/features/newfeature/auth/controller/auth_controller.dart';
 import 'package:kathoram/routes/route_path.dart';
 
 class ApprovalPendingScreen extends StatefulWidget {
@@ -12,12 +13,38 @@ class ApprovalPendingScreen extends StatefulWidget {
 }
 
 class _ApprovalPendingScreenState extends State<ApprovalPendingScreen> {
+  Timer? _pollingTimer;
+
   @override
   void initState() {
-    Timer(const Duration(seconds: 4), () {
-      Get.offAllNamed(RoutePath.bottomNav);
-    });
     super.initState();
+    _startApprovalPolling();
+  }
+
+  void _startApprovalPolling() {
+    // Check immediately first
+    _checkApprovalStatus();
+    // Then poll every 10 seconds
+    _pollingTimer = Timer.periodic(const Duration(seconds: 10), (_) {
+      _checkApprovalStatus();
+    });
+  }
+
+  Future<void> _checkApprovalStatus() async {
+    try {
+      final authController = Get.find<AuthController>();
+      final isValid = await authController.checkIsLogin();
+      if (isValid && authController.userProfile.value?.isApproved == true) {
+        _pollingTimer?.cancel();
+        Get.offAllNamed(RoutePath.bottomNav);
+      }
+    } catch (_) {}
+  }
+
+  @override
+  void dispose() {
+    _pollingTimer?.cancel();
+    super.dispose();
   }
 
   @override

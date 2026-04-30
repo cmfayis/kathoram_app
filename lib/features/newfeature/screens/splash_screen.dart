@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:kathoram/features/newfeature/auth/controller/auth_controller.dart';
 import 'package:kathoram/local_storage/shared_pref.dart';
 import 'package:kathoram/routes/route_path.dart';
 
@@ -19,10 +20,31 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    Timer(const Duration(seconds: 4), () {
-      final isLoggedIn = MySharedPref.getLoggedInStatus();
-      Get.offAllNamed(isLoggedIn ? RoutePath.bottomNav : RoutePath.signIn);
-    });
+    Timer(const Duration(seconds: 4), () => _navigateAfterSplash());
+  }
+
+  Future<void> _navigateAfterSplash() async {
+    final isLoggedIn = MySharedPref.getLoggedInStatus();
+    if (!isLoggedIn) {
+      Get.offAllNamed(RoutePath.signIn);
+      return;
+    }
+
+    try {
+      final authController = Get.find<AuthController>();
+      final isValid = await authController.checkIsLogin();
+      if (isValid && authController.userProfile.value?.isApproved == true) {
+        Get.offAllNamed(RoutePath.bottomNav);
+      } else if (isValid) {
+        // User is logged in but not approved yet
+        Get.offAllNamed(RoutePath.approval);
+      } else {
+        // Session expired or invalid
+        Get.offAllNamed(RoutePath.signIn);
+      }
+    } catch (_) {
+      Get.offAllNamed(RoutePath.signIn);
+    }
   }
 
   @override

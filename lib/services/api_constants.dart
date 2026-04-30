@@ -1,5 +1,5 @@
 class ApiConstants {
-  static const baseUrl = 'http://192.168.1.12:4000/';
+  static const baseUrl = 'http://localhost:4000/';
 
   static String refreshToken = "";
 
@@ -11,4 +11,5 @@ class ApiConstants {
   static const String fileupload = 'api/v1/staff/file/upload';
   static const String uploadFile = 'api/v1/staff/file/upload';
   static const String updateProfile = 'api/v1/staff/update';
+  static const String callHistory = 'api/v1/staff/call-history';
 }

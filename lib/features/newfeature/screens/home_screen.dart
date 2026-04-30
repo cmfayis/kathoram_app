@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:kathoram/features/newfeature/auth/controller/auth_controller.dart';
 import 'package:kathoram/features/newfeature/core/app_colors.dart';
-
-// Assuming you have this imported in your real project
-// import '../core/app_colors.dart';
-
-// Temporary fallback colors if AppColors is not available
-
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -15,7 +11,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  bool isOnline = true;
+  final authController = Get.find<AuthController>();
 
   @override
   Widget build(BuildContext context) {
@@ -25,8 +21,23 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           children: [
             // 1. The Small Curved Header from Approval Screen
-            const _SmallCurvedHeader(),
-            
+            // const _SmallCurvedHeader(),
+            Container(
+              decoration: BoxDecoration(
+                color: AppColors.primaryBlue,
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(30),
+                  bottomRight: Radius.circular(30),
+                ),
+              ),
+              height: 180, // Shorter height than the login header
+              width: double.infinity,
+              // color: const Color(0xFF2B80FF), // Primary blue
+              child: SafeArea(
+                bottom: false,
+                child: Center(child: Image.asset('assets/png/Group 21128.png')),
+              ),
+            ),
             // 2. Overlapping Content
             Padding(
               // Pushes the content down so it overlaps the bottom of the curve
@@ -58,7 +69,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: _buildOnlineToggle(),
                           ),
                         ),
-                        
+
                         // Right Side: Coins Section
                         Expanded(
                           flex: 2,
@@ -67,43 +78,80 @@ class _HomeScreenState extends State<HomeScreen> {
                             children: [
                               // "Coins Collected" Pill
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 4,
+                                ),
                                 decoration: BoxDecoration(
                                   color: AppColors.primaryBlue,
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: const Text(
-                                  'Coins Collected', 
-                                  style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w500)
+                                  'Coins Collected',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                 ),
                               ),
                               const SizedBox(height: 12),
-                              
+
                               // Day Call
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.end,
                                 children: [
-                                  const Text('Day Call : ', style: TextStyle(fontWeight: FontWeight.w500, fontSize: 14)),
+                                  const Text(
+                                    'Day Call : ',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 14,
+                                    ),
+                                  ),
                                   _buildCoinIcon(),
                                   const SizedBox(width: 6),
-                                  const Text('100', style: TextStyle(color: AppColors.primaryBlue, fontWeight: FontWeight.bold, fontSize: 16)),
+                                  const Text(
+                                    '100',
+                                    style: TextStyle(
+                                      color: AppColors.primaryBlue,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    ),
+                                  ),
                                 ],
                               ),
-                              
+
                               // Subtle Divider
                               const Padding(
                                 padding: EdgeInsets.symmetric(vertical: 8.0),
-                                child: Divider(height: 1, thickness: 1, color: Color(0xFFEEEEEE)),
+                                child: Divider(
+                                  height: 1,
+                                  thickness: 1,
+                                  color: Color(0xFFEEEEEE),
+                                ),
                               ),
-                              
+
                               // Night Call
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.end,
                                 children: [
-                                  const Text('Night Call : ', style: TextStyle(fontWeight: FontWeight.w500, fontSize: 14)),
+                                  const Text(
+                                    'Night Call : ',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 14,
+                                    ),
+                                  ),
                                   _buildCoinIcon(),
                                   const SizedBox(width: 6),
-                                  const Text('100', style: TextStyle(color: AppColors.primaryBlue, fontWeight: FontWeight.bold, fontSize: 16)),
+                                  const Text(
+                                    '100',
+                                    style: TextStyle(
+                                      color: AppColors.primaryBlue,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ],
@@ -112,37 +160,56 @@ class _HomeScreenState extends State<HomeScreen> {
                       ],
                     ),
                   ),
-                  
+
                   const SizedBox(height: 15),
-                  
+
                   // Active Call Card (Jhon)
                   _buildIncomingCallCard(
                     name: 'Jhon',
                     initial: 'J',
                     color: AppColors.avatarRed,
                   ),
-                  
+
                   const SizedBox(height: 25),
-                  
+
                   // Recent Calls Divider
                   Row(
                     children: [
-                      const Expanded(child: Divider(color: Color(0xFFE0E0E0), thickness: 1)),
+                      const Expanded(
+                        child: Divider(color: Color(0xFFE0E0E0), thickness: 1),
+                      ),
                       const Padding(
                         padding: EdgeInsets.symmetric(horizontal: 15),
-                        child: Text('Recent Calls', style: TextStyle(fontWeight: FontWeight.w500, fontSize: 13, color: Colors.black87)),
+                        child: Text(
+                          'Recent Calls',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w500,
+                            fontSize: 13,
+                            color: Colors.black87,
+                          ),
+                        ),
                       ),
-                      const Expanded(child: Divider(color: Color(0xFFE0E0E0), thickness: 1)),
+                      const Expanded(
+                        child: Divider(color: Color(0xFFE0E0E0), thickness: 1),
+                      ),
                     ],
                   ),
-                  
+
                   const SizedBox(height: 20),
-                  
+
                   // Recent Calls List
-                  _buildRecentCallCard(name: 'Ratheesh Kumar', initial: 'R', color: AppColors.avatarGreen),
+                  _buildRecentCallCard(
+                    name: 'Ratheesh Kumar',
+                    initial: 'R',
+                    color: AppColors.avatarGreen,
+                  ),
                   const SizedBox(height: 15),
-                  _buildRecentCallCard(name: 'Abdul Fayis', initial: 'R', color: AppColors.avatarGold),
-                  
+                  _buildRecentCallCard(
+                    name: 'Abdul Fayis',
+                    initial: 'R',
+                    color: AppColors.avatarGold,
+                  ),
+
                   const SizedBox(height: 40),
                 ],
               ),
@@ -158,52 +225,55 @@ class _HomeScreenState extends State<HomeScreen> {
   // ==========================================
 
   Widget _buildOnlineToggle() {
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          isOnline = !isOnline;
-        });
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        width: 85,
-        height: 35,
-        padding: const EdgeInsets.symmetric(horizontal: 4),
-        decoration: BoxDecoration(
-          color: isOnline ? AppColors.onlineGreen : AppColors.offlineRed,
-          borderRadius: BorderRadius.circular(30),
-        ),
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            // Text changes side based on state
-            AnimatedPositioned(
-              duration: const Duration(milliseconds: 200),
-              left: isOnline ? 12 : null,
-              right: !isOnline ? 10 : null,
-              child: Text(
-                isOnline ? 'Online' : 'Offline', 
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 12)
-              ),
-            ),
-            // White circle handles sliding
-            AnimatedPositioned(
-              duration: const Duration(milliseconds: 200),
-              right: isOnline ? 2 : null,
-              left: !isOnline ? 2 : null,
-              child: Container(
-                width: 28,
-                height: 28,
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
+    return Obx(() {
+      final isOnline = authController.isOnlineStatus.value;
+      return GestureDetector(
+        onTap: () {
+          authController.toggleOnlineStatus(!isOnline);
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          width: 112,
+          height: 31,
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          decoration: BoxDecoration(
+            color: isOnline ? AppColors.onlineGreen : AppColors.offlineRed,
+            borderRadius: BorderRadius.circular(30),
+          ),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              AnimatedPositioned(
+                duration: const Duration(milliseconds: 200),
+                left: isOnline ? 12 : null,
+                right: !isOnline ? 10 : null,
+                child: Text(
+                  isOnline ? 'Online' : 'Offline',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                  ),
                 ),
               ),
-            ),
-          ],
+              AnimatedPositioned(
+                duration: const Duration(milliseconds: 200),
+                right: isOnline ? 2 : null,
+                left: !isOnline ? 2 : null,
+                child: Container(
+                  width: 26,
+                  height: 26,
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
-    );
+      );
+    });
   }
 
   Widget _buildCoinIcon() {
@@ -211,14 +281,22 @@ class _HomeScreenState extends State<HomeScreen> {
       width: 18,
       height: 18,
       decoration: const BoxDecoration(
-        shape: BoxShape.circle, 
+        shape: BoxShape.circle,
         color: Color(0xFFDE9E36), // Exact gold from the image
       ),
-      child: const Icon(Icons.mic, size: 11, color: Colors.white), // Mic inside the coin
+      child: const Icon(
+        Icons.mic,
+        size: 11,
+        color: Colors.white,
+      ), // Mic inside the coin
     );
   }
 
-  Widget _buildIncomingCallCard({required String name, required String initial, required Color color}) {
+  Widget _buildIncomingCallCard({
+    required String name,
+    required String initial,
+    required Color color,
+  }) {
     return Container(
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
@@ -231,19 +309,37 @@ class _HomeScreenState extends State<HomeScreen> {
           CircleAvatar(
             radius: 28,
             backgroundColor: color,
-            child: Text(initial, style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w600)),
+            child: Text(
+              initial,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 24,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
           const SizedBox(width: 15),
-          Text(name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500)),
-          
+          Text(
+            name,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+          ),
+
           const Spacer(),
-          
+
           Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              _buildCallButton(text: 'Accept', color: AppColors.onlineGreen, icon: Icons.phone),
+              _buildCallButton(
+                text: 'Accept',
+                color: AppColors.onlineGreen,
+                icon: Icons.phone,
+              ),
               const SizedBox(height: 8),
-              _buildCallButton(text: 'Reject', color: AppColors.offlineRed, icon: Icons.phone_disabled_rounded), // Using an icon closer to "reject"
+              _buildCallButton(
+                text: 'Reject',
+                color: AppColors.offlineRed,
+                icon: Icons.phone_disabled_rounded,
+              ), // Using an icon closer to "reject"
             ],
           ),
         ],
@@ -251,26 +347,41 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildCallButton({required String text, required Color color, required IconData icon}) {
+  Widget _buildCallButton({
+    required String text,
+    required Color color,
+    required IconData icon,
+  }) {
     return Container(
       width: 90, // Explicit width to match the pill shape exactly
       padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
       decoration: BoxDecoration(
-        color: color, 
-        borderRadius: BorderRadius.circular(20)
+        color: color,
+        borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(icon, color: Colors.white, size: 14),
           const SizedBox(width: 4),
-          Text(text, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13)),
+          Text(
+            text,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildRecentCallCard({required String name, required String initial, required Color color}) {
+  Widget _buildRecentCallCard({
+    required String name,
+    required String initial,
+    required Color color,
+  }) {
     return Container(
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
@@ -283,10 +394,20 @@ class _HomeScreenState extends State<HomeScreen> {
           CircleAvatar(
             radius: 28,
             backgroundColor: color,
-            child: Text(initial, style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w600)),
+            child: Text(
+              initial,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 24,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
           const SizedBox(width: 15),
-          Text(name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+          Text(
+            name,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+          ),
         ],
       ),
     );
@@ -311,9 +432,7 @@ class _SmallCurvedHeader extends StatelessWidget {
         color: const Color(0xFF2B80FF), // Primary blue
         child: SafeArea(
           bottom: false,
-          child: Center(
-            child: Image.asset('assets/png/Group 21128.png')
-          ),
+          child: Center(child: Image.asset('assets/png/Group 21128.png')),
         ),
       ),
     );
@@ -326,12 +445,14 @@ class _SmallHeaderClipper extends CustomClipper<Path> {
   Path getClip(Size size) {
     final path = Path();
     path.lineTo(0, size.height - 40);
-    
+
     path.quadraticBezierTo(
-      size.width / 2, size.height + 15, 
-      size.width, size.height - 40
+      size.width / 2,
+      size.height + 15,
+      size.width,
+      size.height - 40,
     );
-    
+
     path.lineTo(size.width, 0);
     path.close();
     return path;

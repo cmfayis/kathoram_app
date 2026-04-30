@@ -9,8 +9,11 @@ import 'package:image_picker/image_picker.dart';
 import '../../../../local_storage/shared_pref.dart';
 import '../../../../routes/custom_navigator.dart';
 import '../../../../routes/route_path.dart';
+import '../../../../services/socket_service.dart';
+import '../../../../services/zego_call_service.dart';
 import '../../../../utils/enum.dart';
 import '../../core/app_colors.dart';
+import '../model/call_history_model.dart';
 import '../model/login_response_model.dart';
 import '../model/signup_response_model.dart';
 import '../model/user_profile_model.dart';
@@ -33,6 +36,15 @@ class AuthController extends GetxController {
 
   final userProfile = Rxn<UserProfileData>();
   final selectedProfileImagePath = RxnString();
+
+  // Online/Offline status
+  final isOnlineStatus = false.obs;
+
+  // Call History
+  final callHistoryList = <CallHistoryItem>[].obs;
+  final callHistoryPage = 1.obs;
+  final isLoadingCallHistory = false.obs;
+  final hasMoreCallHistory = true.obs;
 
   final ImagePicker _imagePicker = ImagePicker();
 
@@ -77,7 +89,14 @@ class AuthController extends GetxController {
 
         apiCallStatus.value = ApiCallStatus.success;
         Fluttertoast.showToast(msg: response.message);
-        CustomNavigator.pushCompleteReplacement(RoutePath.bottomNav);
+
+        // Check isApproved via isLogin API
+        final isValid = await checkIsLogin();
+        if (isValid && userProfile.value?.isApproved == true) {
+          CustomNavigator.pushCompleteReplacement(RoutePath.bottomNav);
+        } else {
+          CustomNavigator.pushCompleteReplacement(RoutePath.approval);
+        }
       } else {
         apiCallStatus.value = ApiCallStatus.error;
         Fluttertoast.showToast(msg: response.message);
@@ -176,6 +195,23 @@ class AuthController extends GetxController {
             ? dataMap['user'] as Map<String, dynamic>
             : dataMap;
         userProfile.value = UserProfileData.fromJson(userJson);
+        isOnlineStatus.value = userProfile.value?.status == 'online';
+
+        // Initialize ZegoCloud call invitation so this staff can
+        // receive incoming calls (even in killed / background state)
+        if (userProfile.value != null && userProfile.value!.isApproved) {
+          ZegoCallService.instance.onUserLogin(
+            userID: userProfile.value!.id,
+            userName: userProfile.value!.name,
+          );
+
+          // Connect to backend socket to receive INCOMING_CALL events
+          SocketService.connect(
+            staffId: userProfile.value!.id,
+            staffName: userProfile.value!.name,
+          );
+        }
+
         return true;
       }
       return false;
@@ -338,6 +374,9 @@ class AuthController extends GetxController {
   }
 
   Future<void> _clearSessionAndNavigate() async {
+    // Disconnect socket and ZegoCloud so we stop receiving calls
+    SocketService.disconnect();
+    await ZegoCallService.instance.onUserLogout();
     await MySharedPref.clear();
     Get.offAllNamed(RoutePath.signIn);
   }
@@ -444,6 +483,82 @@ class AuthController extends GetxController {
     signupPasswordController.clear();
     signupConfirmPasswordController.clear();
     isTermsAgreed.value = false;
+  }
+
+  // ==========================================
+  // ONLINE / OFFLINE TOGGLE
+  // ==========================================
+
+  Future<void> toggleOnlineStatus(bool value) async {
+    final previousValue = isOnlineStatus.value;
+    try {
+      isOnlineStatus.value = value;
+      final status = value ? 'online' : 'offline';
+      final response = await AuthRepository.updateProfile({'status': status});
+      if (response.success) {
+        Fluttertoast.showToast(msg: 'Status updated to $status');
+      } else {
+        isOnlineStatus.value = previousValue;
+        Fluttertoast.showToast(msg: response.message);
+      }
+    } catch (e) {
+      isOnlineStatus.value = previousValue;
+      Fluttertoast.showToast(msg: e.toString());
+    }
+  }
+
+  // ==========================================
+  // CALL HISTORY
+  // ==========================================
+
+  Future<void> fetchCallHistory({bool refresh = false}) async {
+    if (refresh) {
+      callHistoryPage.value = 1;
+      callHistoryList.clear();
+      hasMoreCallHistory.value = true;
+    }
+
+    if (isLoadingCallHistory.value || !hasMoreCallHistory.value) return;
+
+    try {
+      isLoadingCallHistory.value = true;
+
+      final payload = {
+        'callerId': '',
+        'page': callHistoryPage.value,
+        'pageSize': 10,
+        'keyword': '',
+        'startDate': '',
+        'endDate': '',
+        'status': '',
+      };
+
+      final response = await AuthRepository.getCallHistory(payload);
+
+      if (response.success && response.data != null) {
+        final data = response.data as Map<String, dynamic>;
+        final resultList = data['result'] as List? ?? [];
+        final items = resultList
+            .map((e) =>
+                CallHistoryItem.fromJson(e as Map<String, dynamic>))
+            .toList();
+
+        final paginationMap = data['pagination'] as Map<String, dynamic>?;
+        final totalPages = paginationMap?['totalPages'] ?? 1;
+
+        callHistoryList.addAll(items);
+
+        if (callHistoryPage.value >= (totalPages as int)) {
+          hasMoreCallHistory.value = false;
+        } else {
+          callHistoryPage.value++;
+        }
+      }
+    } catch (e) {
+      Fluttertoast.showToast(msg: e.toString());
+    } finally {
+      isLoadingCallHistory.value = false;
+    }
   }
 
   String getMimeType(String path) {

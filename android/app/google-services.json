@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "882594698231",
+    "project_id": "kathoram-65e13",
+    "storage_bucket": "kathoram-65e13.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:882594698231:android:a51521be2738949fc054f2",
+        "android_client_info": {
+          "package_name": "com.kathoram.agent_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBg-MmxAlKZ1JAFXTS3hrGZ5bS_-kka644"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:882594698231:android:339195a0cb0ee06bc054f2",
+        "android_client_info": {
+          "package_name": "kotharam.mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBg-MmxAlKZ1JAFXTS3hrGZ5bS_-kka644"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

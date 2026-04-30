@@ -5,6 +5,7 @@ class UserProfileData {
   final int? age;
   final String profileImage;
   final bool isApproved;
+  final String status;
 
   UserProfileData({
     required this.id,
@@ -13,6 +14,7 @@ class UserProfileData {
     required this.profileImage,
     required this.isApproved,
     this.age,
+    this.status = 'offline',
   });
 
   factory UserProfileData.fromJson(Map<String, dynamic> json) {
@@ -25,6 +27,7 @@ class UserProfileData {
           : int.tryParse(json['age']?.toString() ?? ''),
       profileImage: json['profileImage']?.toString() ?? '',
       isApproved: json['isApproved'] == true,
+      status: json['status']?.toString() ?? 'offline',
     );
   }
 }
