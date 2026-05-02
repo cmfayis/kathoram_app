@@ -9,6 +9,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../../local_storage/shared_pref.dart';
 import '../../../../routes/custom_navigator.dart';
 import '../../../../routes/route_path.dart';
+import '../../../../services/call_permission_service.dart';
 import '../../../../services/socket_service.dart';
 import '../../../../services/zego_call_service.dart';
 import '../../../../utils/enum.dart';
@@ -200,6 +201,14 @@ class AuthController extends GetxController {
         // Initialize ZegoCloud call invitation so this staff can
         // receive incoming calls (even in killed / background state)
         if (userProfile.value != null && userProfile.value!.isApproved) {
+          debugPrint('┌── [AuthController] Initializing Zego ──────────');
+          debugPrint('│ staffID: ${userProfile.value!.id}');
+          debugPrint('│ staffName: ${userProfile.value!.name}');
+          debugPrint('└────────────────────────────────────────────────');
+
+          // Permissions are no longer requested here — they are gated on
+          // the online toggle so the staff is prompted only when they
+          // actually intend to start receiving calls.
           ZegoCallService.instance.onUserLogin(
             userID: userProfile.value!.id,
             userName: userProfile.value!.name,
@@ -210,6 +219,8 @@ class AuthController extends GetxController {
             staffId: userProfile.value!.id,
             staffName: userProfile.value!.name,
           );
+        } else {
+          debugPrint('[AuthController] ⚠️ Staff not approved or null, Zego NOT initialized');
         }
 
         return true;
@@ -221,6 +232,20 @@ class AuthController extends GetxController {
   }
 
   Future<void> logout() async {
+    // Refuse to log out while still marked online — otherwise the backend
+    // keeps routing calls to a staff that is no longer reachable. Ask the
+    // user to switch offline first; on confirm, flip status and proceed.
+    if (isOnlineStatus.value) {
+      final confirmed = await _confirmGoOfflineBeforeLogout();
+      if (confirmed != true) return;
+
+      await toggleOnlineStatus(false);
+      if (isOnlineStatus.value) {
+        Fluttertoast.showToast(msg: 'Failed to go offline, please try again');
+        return;
+      }
+    }
+
     try {
       isLoading.value = true;
       final response = await AuthRepository.logout();
@@ -232,6 +257,85 @@ class AuthController extends GetxController {
       isLoading.value = false;
       await _clearSessionAndNavigate();
     }
+  }
+
+  Future<bool?> _confirmGoOfflineBeforeLogout() {
+    return Get.dialog<bool>(
+      Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: Colors.orange.shade50,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.wifi_tethering_rounded,
+                  color: Colors.orange,
+                  size: 28,
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'You are online',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Please switch to offline before logging out so users stop being routed to you.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Get.back(result: false),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.primaryBlue,
+                        side: const BorderSide(color: AppColors.primaryBlue),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: const Text('Cancel'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () => Get.back(result: true),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryBlue,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: const Text('Go offline & logout'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+      barrierDismissible: false,
+    );
   }
 
   Future<void> deleteAccount() async {
@@ -491,6 +595,22 @@ class AuthController extends GetxController {
 
   Future<void> toggleOnlineStatus(bool value) async {
     final previousValue = isOnlineStatus.value;
+
+    // When going online, request the runtime permissions Zego needs to
+    // deliver incoming calls. Refuse the toggle if any critical one is
+    // missing — without them, calls either don't ring or don't arrive.
+    if (value) {
+      final result = await CallPermissionService.requestAll();
+      if (!result.hasAllCritical) {
+        Fluttertoast.showToast(
+          msg:
+              'Cannot go online — please grant: ${result.missingCritical.join(", ")}',
+        );
+        isOnlineStatus.value = previousValue;
+        return;
+      }
+    }
+
     try {
       isOnlineStatus.value = value;
       final status = value ? 'online' : 'offline';

@@ -47,12 +47,14 @@ dependencies:
   url_launcher: ^6.2.5
   zego_uikit_prebuilt_call: 4.23.1
   zego_uikit_signaling_plugin: 2.8.21
+  zego_uikit: 2.28.47
   permission_handler: ^12.0.1
   socket_io_client: ^2.0.3+1
   firebase_core: ^4.7.0
   firebase_crashlytics: ^5.2.0
   firebase_messaging: ^16.2.0
   flutter_local_notifications: ^19.2.1
+  flutter_ringtone_player: ^4.0.0+3
 
 dev_dependencies:
   flutter_test:
@@ -79,6 +81,7 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - assets/png/
+    - assets/ringtone/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

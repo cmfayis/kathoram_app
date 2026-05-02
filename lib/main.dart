@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -16,6 +17,19 @@ import 'routes/route_path.dart';
 import 'services/zego_call_service.dart';
 import 'utils/navigator_key_utils.dart';
 
+/// CRITICAL: This handler runs in a separate isolate when the app is killed/background.
+/// It allows Firebase to process push notifications (including Zego's offline call push).
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  debugPrint('┌── [BackgroundHandler] ─────────────────────────────');
+  debugPrint('│ Got FCM message in BACKGROUND/KILLED state');
+  debugPrint('│ data: ${message.data}');
+  debugPrint('│ notification: ${message.notification?.title}');
+  debugPrint('│ messageId: ${message.messageId}');
+  debugPrint('└────────────────────────────────────────────────────');
+}
+
 
 
 Future<void> main() async {
@@ -23,6 +37,9 @@ Future<void> main() async {
   await MySharedPref.init();
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  // Register the background message handler BEFORE any other Firebase usage
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
   FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
 
