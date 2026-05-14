@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import 'package:kathoram/features/newfeature/auth/controller/auth_controller.dart';
+import 'package:kathoram/features/newfeature/auth/model/recent_call_model.dart';
 import 'package:kathoram/features/newfeature/core/app_colors.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -12,209 +14,267 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final authController = Get.find<AuthController>();
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    authController.fetchRecentCalls(refresh: true);
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      authController.fetchRecentCalls();
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.backgroundGrey,
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // 1. The Small Curved Header from Approval Screen
-            // const _SmallCurvedHeader(),
-            Container(
-              decoration: BoxDecoration(
-                color: AppColors.primaryBlue,
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(30),
-                  bottomRight: Radius.circular(30),
+      body: RefreshIndicator(
+        onRefresh: () async {
+          await authController.checkIsLogin();
+          await authController.fetchRecentCalls(refresh: true);
+        },
+        child: SingleChildScrollView(
+          controller: _scrollController,
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  color: AppColors.primaryBlue,
+                  borderRadius: const BorderRadius.only(
+                    bottomLeft: Radius.circular(30),
+                    bottomRight: Radius.circular(30),
+                  ),
+                ),
+                height: 180,
+                width: double.infinity,
+                child: SafeArea(
+                  bottom: false,
+                  child: Center(
+                    child: Image.asset('assets/png/Group 21128.png'),
+                  ),
                 ),
               ),
-              height: 180, // Shorter height than the login header
-              width: double.infinity,
-              // color: const Color(0xFF2B80FF), // Primary blue
-              child: SafeArea(
-                bottom: false,
-                child: Center(child: Image.asset('assets/png/Group 21128.png')),
-              ),
-            ),
-            // 2. Overlapping Content
-            Padding(
-              // Pushes the content down so it overlaps the bottom of the curve
-              padding: const EdgeInsets.only(top: 20.0, left: 20, right: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Status and Coins Card
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.04),
-                          blurRadius: 15,
-                          offset: const Offset(0, 5),
+              Padding(
+                padding: const EdgeInsets.only(top: 20.0, left: 20, right: 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Status and Coins Card
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.04),
+                            blurRadius: 15,
+                            offset: const Offset(0, 5),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            flex: 1,
+                            child: Align(
+                              alignment: Alignment.centerLeft,
+                              child: _buildOnlineToggle(),
+                            ),
+                          ),
+                          Expanded(
+                            flex: 2,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primaryBlue,
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: const Text(
+                                    'Coins Collected',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+
+                                // Day Call
+                                Obx(() {
+                                  final coins =
+                                      authController.userProfile.value?.staffCoins;
+                                  final dayCoins = coins?.dayCoins ?? 0;
+                                  return Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      const Text(
+                                        'Day Call : ',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                      _buildCoinIcon(),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        _formatCoins(dayCoins),
+                                        style: const TextStyle(
+                                          color: AppColors.primaryBlue,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                }),
+
+                                const Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 8.0),
+                                  child: Divider(
+                                    height: 1,
+                                    thickness: 1,
+                                    color: Color(0xFFEEEEEE),
+                                  ),
+                                ),
+
+                                // Night Call
+                                Obx(() {
+                                  final coins =
+                                      authController.userProfile.value?.staffCoins;
+                                  final nightCoins = coins?.nightCoins ?? 0;
+                                  return Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      const Text(
+                                        'Night Call : ',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                      _buildCoinIcon(),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        _formatCoins(nightCoins),
+                                        style: const TextStyle(
+                                          color: AppColors.primaryBlue,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                }),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 25),
+
+                    // Recent Calls Divider
+                    Row(
+                      children: const [
+                        Expanded(
+                          child: Divider(color: Color(0xFFE0E0E0), thickness: 1),
+                        ),
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 15),
+                          child: Text(
+                            'Recent Calls',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w500,
+                              fontSize: 13,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: Divider(color: Color(0xFFE0E0E0), thickness: 1),
                         ),
                       ],
                     ),
-                    child: Row(
-                      children: [
-                        // Left Side: Online Switch
-                        Expanded(
-                          flex: 1,
-                          child: Align(
-                            alignment: Alignment.centerLeft,
-                            child: _buildOnlineToggle(),
+
+                    const SizedBox(height: 20),
+
+                    // Recent Calls List (API driven)
+                    Obx(() {
+                      final list = authController.recentCallsList;
+                      final isLoading =
+                          authController.isLoadingRecentCalls.value;
+
+                      if (isLoading && list.isEmpty) {
+                        return const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 30),
+                          child: Center(child: CircularProgressIndicator()),
+                        );
+                      }
+
+                      if (list.isEmpty) {
+                        return const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 30),
+                          child: Center(
+                            child: Text(
+                              'No recent calls',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.black54,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
                           ),
-                        ),
+                        );
+                      }
 
-                        // Right Side: Coins Section
-                        Expanded(
-                          flex: 2,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              // "Coins Collected" Pill
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: AppColors.primaryBlue,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: const Text(
-                                  'Coins Collected',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
+                      return Column(
+                        children: [
+                          for (var i = 0; i < list.length; i++) ...[
+                            _buildRecentCallCard(list[i]),
+                            if (i < list.length - 1) const SizedBox(height: 15),
+                          ],
+                          if (authController.hasMoreRecentCalls.value)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 20),
+                              child: Center(
+                                child: isLoading
+                                    ? const CircularProgressIndicator()
+                                    : const SizedBox.shrink(),
                               ),
-                              const SizedBox(height: 12),
+                            ),
+                        ],
+                      );
+                    }),
 
-                              // Day Call
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  const Text(
-                                    'Day Call : ',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w500,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                  _buildCoinIcon(),
-                                  const SizedBox(width: 6),
-                                  const Text(
-                                    '100',
-                                    style: TextStyle(
-                                      color: AppColors.primaryBlue,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                    ),
-                                  ),
-                                ],
-                              ),
-
-                              // Subtle Divider
-                              const Padding(
-                                padding: EdgeInsets.symmetric(vertical: 8.0),
-                                child: Divider(
-                                  height: 1,
-                                  thickness: 1,
-                                  color: Color(0xFFEEEEEE),
-                                ),
-                              ),
-
-                              // Night Call
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  const Text(
-                                    'Night Call : ',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w500,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                  _buildCoinIcon(),
-                                  const SizedBox(width: 6),
-                                  const Text(
-                                    '100',
-                                    style: TextStyle(
-                                      color: AppColors.primaryBlue,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 15),
-
-                  // Active Call Card (Jhon)
-                  _buildIncomingCallCard(
-                    name: 'Jhon',
-                    initial: 'J',
-                    color: AppColors.avatarRed,
-                  ),
-
-                  const SizedBox(height: 25),
-
-                  // Recent Calls Divider
-                  Row(
-                    children: [
-                      const Expanded(
-                        child: Divider(color: Color(0xFFE0E0E0), thickness: 1),
-                      ),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 15),
-                        child: Text(
-                          'Recent Calls',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w500,
-                            fontSize: 13,
-                            color: Colors.black87,
-                          ),
-                        ),
-                      ),
-                      const Expanded(
-                        child: Divider(color: Color(0xFFE0E0E0), thickness: 1),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  // Recent Calls List
-                  _buildRecentCallCard(
-                    name: 'Ratheesh Kumar',
-                    initial: 'R',
-                    color: AppColors.avatarGreen,
-                  ),
-                  const SizedBox(height: 15),
-                  _buildRecentCallCard(
-                    name: 'Abdul Fayis',
-                    initial: 'R',
-                    color: AppColors.avatarGold,
-                  ),
-
-                  const SizedBox(height: 40),
-                ],
+                    const SizedBox(height: 40),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -223,6 +283,13 @@ class _HomeScreenState extends State<HomeScreen> {
   // ==========================================
   // HELPER WIDGETS
   // ==========================================
+
+  String _formatCoins(double value) {
+    if (value == value.truncateToDouble()) {
+      return value.toInt().toString();
+    }
+    return value.toStringAsFixed(2);
+  }
 
   Widget _buildOnlineToggle() {
     return Obx(() {
@@ -282,21 +349,28 @@ class _HomeScreenState extends State<HomeScreen> {
       height: 18,
       decoration: const BoxDecoration(
         shape: BoxShape.circle,
-        color: Color(0xFFDE9E36), // Exact gold from the image
+        color: Color(0xFFDE9E36),
       ),
       child: const Icon(
         Icons.mic,
         size: 11,
         color: Colors.white,
-      ), // Mic inside the coin
+      ),
     );
   }
 
-  Widget _buildIncomingCallCard({
-    required String name,
-    required String initial,
-    required Color color,
-  }) {
+  Widget _buildRecentCallCard(RecentCallItem item) {
+    final name = item.callerDetails.name.isNotEmpty
+        ? item.callerDetails.name
+        : 'Unknown';
+    final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
+    final color = _getAvatarColor(initial);
+
+    final dateStr = item.createdAt > 0
+        ? DateFormat('dd MMM | hh:mm a')
+            .format(DateTime.fromMillisecondsSinceEpoch(item.createdAt))
+        : '';
+
     return Container(
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
@@ -319,145 +393,74 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           const SizedBox(width: 15),
-          Text(
-            name,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
-          ),
-
-          const Spacer(),
-
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildCallButton(
-                text: 'Accept',
-                color: AppColors.onlineGreen,
-                icon: Icons.phone,
-              ),
-              const SizedBox(height: 8),
-              _buildCallButton(
-                text: 'Reject',
-                color: AppColors.offlineRed,
-                icon: Icons.phone_disabled_rounded,
-              ), // Using an icon closer to "reject"
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCallButton({
-    required String text,
-    required Color color,
-    required IconData icon,
-  }) {
-    return Container(
-      width: 90, // Explicit width to match the pill shape exactly
-      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: Colors.white, size: 14),
-          const SizedBox(width: 4),
-          Text(
-            text,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
-              fontSize: 13,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                if (dateStr.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    dateStr,
+                    style: const TextStyle(
+                      color: Colors.black54,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRecentCallCard({
-    required String name,
-    required String initial,
-    required Color color,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(15),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: AppColors.primaryBlue.withOpacity(0.3)),
-      ),
-      child: Row(
-        children: [
-          CircleAvatar(
-            radius: 28,
-            backgroundColor: color,
-            child: Text(
-              initial,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 24,
-                fontWeight: FontWeight.w600,
-              ),
+          if (item.duration > 0)
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.access_time_rounded,
+                  size: 13,
+                  color: Colors.black87,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  _formatDuration(item.duration),
+                  style: const TextStyle(
+                    color: Colors.black87,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
             ),
-          ),
-          const SizedBox(width: 15),
-          Text(
-            name,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-          ),
         ],
       ),
     );
   }
-}
 
-// ==========================================
-// HEADER CLASSES
-// ==========================================
-
-/// The exact small header from the Approval Screen
-class _SmallCurvedHeader extends StatelessWidget {
-  const _SmallCurvedHeader({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return ClipPath(
-      clipper: _SmallHeaderClipper(),
-      child: Container(
-        height: 180, // Shorter height than the login header
-        width: double.infinity,
-        color: const Color(0xFF2B80FF), // Primary blue
-        child: SafeArea(
-          bottom: false,
-          child: Center(child: Image.asset('assets/png/Group 21128.png')),
-        ),
-      ),
-    );
-  }
-}
-
-/// A clipper for the smaller header curve
-class _SmallHeaderClipper extends CustomClipper<Path> {
-  @override
-  Path getClip(Size size) {
-    final path = Path();
-    path.lineTo(0, size.height - 40);
-
-    path.quadraticBezierTo(
-      size.width / 2,
-      size.height + 15,
-      size.width,
-      size.height - 40,
-    );
-
-    path.lineTo(size.width, 0);
-    path.close();
-    return path;
+  String _formatDuration(int seconds) {
+    final hours = seconds ~/ 3600;
+    final minutes = (seconds % 3600) ~/ 60;
+    final secs = seconds % 60;
+    if (hours > 0) {
+      return '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}';
+    }
+    return '${minutes.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}';
   }
 
-  @override
-  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
+  Color _getAvatarColor(String initial) {
+    final colors = [
+      AppColors.avatarRed,
+      AppColors.avatarGreen,
+      AppColors.avatarGold,
+      AppColors.primaryBlue,
+      const Color(0xFF9C27B0),
+    ];
+    return colors[initial.codeUnitAt(0) % colors.length];
+  }
 }

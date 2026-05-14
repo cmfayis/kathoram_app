@@ -54,6 +54,28 @@ class _CallsHistoryScreenState extends State<CallsHistoryScreen> {
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
+        actions: [
+          Obx(() {
+            final isLoading = authController.isLoadingCallHistory.value;
+            return IconButton(
+              tooltip: 'Refresh',
+              icon: isLoading
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor:
+                            AlwaysStoppedAnimation<Color>(Colors.black87),
+                      ),
+                    )
+                  : const Icon(Icons.refresh_rounded, color: Colors.black87),
+              onPressed: isLoading
+                  ? null
+                  : () => authController.fetchCallHistory(refresh: true),
+            );
+          }),
+        ],
       ),
       body: Obx(() {
         final callList = authController.callHistoryList;
@@ -64,14 +86,23 @@ class _CallsHistoryScreenState extends State<CallsHistoryScreen> {
         }
 
         if (callList.isEmpty) {
-          return const Center(
-            child: Text(
-              'No call history found',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.black54,
-                fontWeight: FontWeight.w500,
-              ),
+          return RefreshIndicator(
+            onRefresh: () => authController.fetchCallHistory(refresh: true),
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              children: const [
+                SizedBox(height: 200),
+                Center(
+                  child: Text(
+                    'No call history found',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.black54,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
             ),
           );
         }

@@ -137,4 +137,22 @@ class AuthRepository {
     );
     return response;
   }
+
+  static Future<ApiBaseModel> getRecentCalls(
+    Map<String, dynamic> payload,
+  ) async {
+    late ApiBaseModel response;
+    await BaseClient.shared.safeApiCall(
+      ApiConstants.recentCalls,
+      RequestType.post,
+      data: payload,
+      onSuccess: (s) {
+        response = s;
+      },
+      onError: (s) {
+        s.fold((l) => throw l.message, (r) => throw r);
+      },
+    );
+    return response;
+  }
 }

@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
@@ -16,6 +17,7 @@ import '../../../../utils/enum.dart';
 import '../../core/app_colors.dart';
 import '../model/call_history_model.dart';
 import '../model/login_response_model.dart';
+import '../model/recent_call_model.dart';
 import '../model/signup_response_model.dart';
 import '../model/user_profile_model.dart';
 import '../repository/auth_repository.dart';
@@ -46,6 +48,12 @@ class AuthController extends GetxController {
   final callHistoryPage = 1.obs;
   final isLoadingCallHistory = false.obs;
   final hasMoreCallHistory = true.obs;
+
+  // Recent Calls (home screen)
+  final recentCallsList = <RecentCallItem>[].obs;
+  final recentCallsPage = 1.obs;
+  final isLoadingRecentCalls = false.obs;
+  final hasMoreRecentCalls = true.obs;
 
   final ImagePicker _imagePicker = ImagePicker();
 
@@ -90,6 +98,11 @@ class AuthController extends GetxController {
 
         apiCallStatus.value = ApiCallStatus.success;
         Fluttertoast.showToast(msg: response.message);
+
+        // Sync the device timezone with the backend — the app is
+        // international so the backend needs to know each staff's
+        // local timezone for day/night coin accounting.
+        await _syncTimezone();
 
         // Check isApproved via isLogin API
         final isValid = await checkIsLogin();
@@ -170,6 +183,11 @@ class AuthController extends GetxController {
 
         apiCallStatus.value = ApiCallStatus.success;
         Fluttertoast.showToast(msg: response.message);
+
+        // Sync the device timezone with the backend — the app is
+        // international so the backend needs to know each staff's
+        // local timezone for day/night coin accounting.
+        await _syncTimezone();
 
         CustomNavigator.pushCompleteReplacement(RoutePath.uploadProfilePicture);
       } else {
@@ -678,6 +696,74 @@ class AuthController extends GetxController {
       Fluttertoast.showToast(msg: e.toString());
     } finally {
       isLoadingCallHistory.value = false;
+    }
+  }
+
+  // ==========================================
+  // RECENT CALLS (HOME SCREEN)
+  // ==========================================
+
+  Future<void> fetchRecentCalls({bool refresh = false}) async {
+    if (refresh) {
+      recentCallsPage.value = 1;
+      recentCallsList.clear();
+      hasMoreRecentCalls.value = true;
+    }
+
+    if (isLoadingRecentCalls.value || !hasMoreRecentCalls.value) return;
+
+    try {
+      isLoadingRecentCalls.value = true;
+
+      final payload = {
+        'page': recentCallsPage.value,
+        'pageSize': 10,
+      };
+
+      final response = await AuthRepository.getRecentCalls(payload);
+
+      if (response.success && response.data != null) {
+        final data = response.data as Map<String, dynamic>;
+        final resultList = data['result'] as List? ?? [];
+        final items = resultList
+            .map((e) => RecentCallItem.fromJson(e as Map<String, dynamic>))
+            .toList();
+
+        final paginationMap = data['pagination'] as Map<String, dynamic>?;
+        final totalPages = paginationMap?['totalPages'] is int
+            ? paginationMap!['totalPages'] as int
+            : 1;
+
+        recentCallsList.addAll(items);
+
+        if (recentCallsPage.value >= totalPages) {
+          hasMoreRecentCalls.value = false;
+        } else {
+          recentCallsPage.value++;
+        }
+      }
+    } catch (e) {
+      Fluttertoast.showToast(msg: e.toString());
+    } finally {
+      isLoadingRecentCalls.value = false;
+    }
+  }
+
+  // ==========================================
+  // TIMEZONE SYNC
+  // ==========================================
+
+  // Reads the device's IANA timezone (e.g. "Asia/Kolkata") and pushes it
+  // to the backend via the profile update endpoint. Best-effort: failures
+  // are swallowed so they never block the auth flow.
+  Future<void> _syncTimezone() async {
+    try {
+      final info = await FlutterTimezone.getLocalTimezone();
+      final identifier = info.identifier;
+      if (identifier.isEmpty) return;
+      await AuthRepository.updateProfile({'timezone': identifier});
+    } catch (_) {
+      // Intentionally ignored — timezone sync must not break login/signup.
     }
   }
 

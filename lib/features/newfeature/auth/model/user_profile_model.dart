@@ -6,6 +6,8 @@ class UserProfileData {
   final String profileImage;
   final bool isApproved;
   final String status;
+  final String timezone;
+  final StaffCoins staffCoins;
 
   UserProfileData({
     required this.id,
@@ -15,7 +17,9 @@ class UserProfileData {
     required this.isApproved,
     this.age,
     this.status = 'offline',
-  });
+    this.timezone = '',
+    StaffCoins? staffCoins,
+  }) : staffCoins = staffCoins ?? StaffCoins.empty();
 
   factory UserProfileData.fromJson(Map<String, dynamic> json) {
     return UserProfileData(
@@ -28,6 +32,31 @@ class UserProfileData {
       profileImage: json['profileImage']?.toString() ?? '',
       isApproved: json['isApproved'] == true,
       status: json['status']?.toString() ?? 'offline',
+      timezone: json['timezone']?.toString() ?? '',
+      staffCoins: json['staffCoins'] is Map<String, dynamic>
+          ? StaffCoins.fromJson(json['staffCoins'] as Map<String, dynamic>)
+          : StaffCoins.empty(),
     );
+  }
+}
+
+class StaffCoins {
+  final double dayCoins;
+  final double nightCoins;
+
+  StaffCoins({required this.dayCoins, required this.nightCoins});
+
+  factory StaffCoins.empty() => StaffCoins(dayCoins: 0, nightCoins: 0);
+
+  factory StaffCoins.fromJson(Map<String, dynamic> json) {
+    return StaffCoins(
+      dayCoins: _toDouble(json['dayCoins']),
+      nightCoins: _toDouble(json['nightCoins']),
+    );
+  }
+
+  static double _toDouble(dynamic value) {
+    if (value is num) return value.toDouble();
+    return double.tryParse(value?.toString() ?? '') ?? 0;
   }
 }
