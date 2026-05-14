@@ -3,6 +3,8 @@ import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:kathoram/features/newfeature/auth/controller/auth_controller.dart';
+import '../../../routes/custom_navigator.dart';
+import '../../../routes/route_path.dart';
 import '../core/app_colors.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -163,42 +165,70 @@ class ProfileScreen extends StatelessWidget {
                     right: 0,
                     child: Obx(
                       () => Center(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.15),
-                                blurRadius: 15,
-                                offset: const Offset(0, 8),
+                        child: GestureDetector(
+                          onTap: () =>
+                              CustomNavigator.push(RoutePath.editProfile),
+                          child: Stack(
+                            children: [
+                              Container(
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.15),
+                                      blurRadius: 15,
+                                      offset: const Offset(0, 8),
+                                    ),
+                                  ],
+                                ),
+                                child: CircleAvatar(
+                                  radius: 65,
+                                  backgroundImage:
+                                      (authController
+                                              .userProfile
+                                              .value
+                                              ?.profileImage
+                                              .isNotEmpty ??
+                                          false)
+                                      ? NetworkImage(
+                                          authController
+                                              .userProfile
+                                              .value!
+                                              .profileImage,
+                                        )
+                                      : null,
+                                  child:
+                                      (authController
+                                              .userProfile
+                                              .value
+                                              ?.profileImage
+                                              .isNotEmpty ??
+                                          false)
+                                      ? null
+                                      : const Icon(Icons.person, size: 65),
+                                ),
+                              ),
+                              Positioned(
+                                right: 2,
+                                bottom: 6,
+                                child: Container(
+                                  padding: const EdgeInsets.all(7),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primaryBlue,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: Colors.white,
+                                      width: 2,
+                                    ),
+                                  ),
+                                  child: const Icon(
+                                    Icons.edit,
+                                    size: 14,
+                                    color: Colors.white,
+                                  ),
+                                ),
                               ),
                             ],
-                          ),
-                          child: CircleAvatar(
-                            radius: 65,
-                            backgroundImage:
-                                (authController
-                                        .userProfile
-                                        .value
-                                        ?.profileImage
-                                        .isNotEmpty ??
-                                    false)
-                                ? NetworkImage(
-                                    authController
-                                        .userProfile
-                                        .value!
-                                        .profileImage,
-                                  )
-                                : null,
-                            child:
-                                (authController
-                                        .userProfile
-                                        .value
-                                        ?.profileImage
-                                        .isNotEmpty ??
-                                    false)
-                                ? null
-                                : const Icon(Icons.person, size: 65),
                           ),
                         ),
                       ),

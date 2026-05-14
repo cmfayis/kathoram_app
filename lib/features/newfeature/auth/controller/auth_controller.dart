@@ -40,6 +40,13 @@ class AuthController extends GetxController {
   final userProfile = Rxn<UserProfileData>();
   final selectedProfileImagePath = RxnString();
 
+  // Edit Profile fields
+  final editNameController = TextEditingController();
+  final editAgeController = TextEditingController();
+  final editLanguageController = TextEditingController();
+  final editProfileImagePath = RxnString();
+  final isUpdatingProfile = false.obs;
+
   // Online/Offline status
   final isOnlineStatus = false.obs;
 
@@ -160,7 +167,7 @@ class AuthController extends GetxController {
         'email': signupEmailController.text.trim(),
         'password': signupPasswordController.text.trim(),
         'age': age,
-        'lauguage': signupLanguageController.text.trim(),
+        'language': signupLanguageController.text.trim(),
         'isTermsAgreed': isTermsAgreed.value,
       };
 
@@ -454,6 +461,134 @@ class AuthController extends GetxController {
     } finally {
       isLoading.value = false;
     }
+  }
+
+  // ==========================================
+  // EDIT PROFILE
+  // ==========================================
+
+  // Pre-fill the edit form from the currently cached user profile so the
+  // user sees their existing values before changing anything.
+  void prefillEditProfileFromCache() {
+    final profile = userProfile.value;
+    editNameController.text = profile?.name ?? '';
+    editAgeController.text = profile?.age?.toString() ?? '';
+    editLanguageController.text = profile?.language ?? '';
+    editProfileImagePath.value = null;
+  }
+
+  Future<void> pickEditProfileImage() async {
+    final image = await _imagePicker.pickImage(source: ImageSource.gallery);
+    if (image == null) return;
+    editProfileImagePath.value = image.path;
+  }
+
+  Future<void> saveProfileChanges() async {
+    final name = editNameController.text.trim();
+    final ageText = editAgeController.text.trim();
+    final language = editLanguageController.text.trim();
+
+    if (name.isEmpty) {
+      Fluttertoast.showToast(msg: 'Please enter your name');
+      return;
+    }
+
+    int? age;
+    if (ageText.isNotEmpty) {
+      age = int.tryParse(ageText);
+      if (age == null || age <= 0) {
+        Fluttertoast.showToast(msg: 'Please enter a valid age');
+        return;
+      }
+    }
+
+    try {
+      isUpdatingProfile.value = true;
+
+      // If a new image was picked, upload it first and grab the fileUrl.
+      String? uploadedFileUrl;
+      final newImagePath = editProfileImagePath.value;
+      if (newImagePath != null && newImagePath.isNotEmpty) {
+        uploadedFileUrl = await _uploadProfileImage(newImagePath);
+        if (uploadedFileUrl == null) return;
+      }
+
+      final payload = <String, dynamic>{
+        'name': name,
+        'age': ?age,
+        if (language.isNotEmpty) 'language': language,
+        'profileImage': ?uploadedFileUrl,
+      };
+
+      final response = await AuthRepository.updateProfile(payload);
+
+      if (response.success) {
+        Fluttertoast.showToast(msg: response.message);
+        await checkIsLogin();
+        editProfileImagePath.value = null;
+        CustomNavigator.pop();
+      } else {
+        Fluttertoast.showToast(msg: response.message);
+      }
+    } catch (e) {
+      Fluttertoast.showToast(msg: e.toString());
+    } finally {
+      isUpdatingProfile.value = false;
+    }
+  }
+
+  // Uploads an image via the signed-url flow (same as onboarding) and returns
+  // the public fileUrl. Returns null and toasts on failure.
+  Future<String?> _uploadProfileImage(String imagePath) async {
+    final file = File(imagePath);
+    final fileName = file.path.split(RegExp(r'[/\\]')).last;
+    final fileType = getMimeType(file.path);
+
+    final uploadUrlResponse = await AuthRepository.getUploadUrl(
+      fileName: fileName,
+      fileType: fileType,
+    );
+    if (!(uploadUrlResponse.success ||
+        uploadUrlResponse.responseCode == 200)) {
+      Fluttertoast.showToast(msg: uploadUrlResponse.message);
+      return null;
+    }
+
+    final uploadUrl = _extractUploadedFileReference(
+      uploadUrlResponse.data,
+      keys: const ['uploadUrl'],
+    );
+    final fileUrl = _extractUploadedFileReference(
+      uploadUrlResponse.data,
+      keys: const ['fileUrl', 'url', 'path', 'location', 'profileImage'],
+    );
+
+    if (uploadUrl == null ||
+        uploadUrl.isEmpty ||
+        fileUrl == null ||
+        fileUrl.isEmpty) {
+      Fluttertoast.showToast(msg: 'Unable to read upload url response');
+      return null;
+    }
+
+    final bytes = await file.readAsBytes();
+    final uploadToStorageResponse = await Dio().put(
+      uploadUrl,
+      data: bytes,
+      options: Options(
+        headers: {'Content-Type': fileType},
+        validateStatus: (status) =>
+            status != null && status >= 200 && status < 300,
+      ),
+    );
+
+    if (uploadToStorageResponse.statusCode != 200 &&
+        uploadToStorageResponse.statusCode != 201) {
+      Fluttertoast.showToast(msg: 'Image upload failed');
+      return null;
+    }
+
+    return fileUrl;
   }
 
   String? _extractUploadedFileReference(

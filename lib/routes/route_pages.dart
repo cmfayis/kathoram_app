@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../features/newfeature/auth/controller/auth_controller.dart';
 import '../features/newfeature/screens/approval_screen.dart';
 import '../features/newfeature/screens/create_account_screen.dart';
+import '../features/newfeature/screens/edit_profile_screen.dart';
 import '../features/newfeature/screens/login_screen.dart';
 import '../features/newfeature/screens/main_layout.dart';
 import '../features/newfeature/screens/splash_screen.dart';
@@ -49,6 +50,11 @@ class RoutePages {
     GetPage(
       name: RoutePath.bottomNav,
       page: () => const MainLayout(),
+      transition: transition,
+    ),
+    GetPage(
+      name: RoutePath.editProfile,
+      page: () => const EditProfileScreen(),
       transition: transition,
     ),
   ];

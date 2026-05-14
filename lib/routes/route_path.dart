@@ -6,4 +6,5 @@ class RoutePath {
   static const String uploadProfilePicture = "/upload-profile-picture";
   static const String approval = "/approval";
   static const String bottomNav = "/bottom-nav";
+  static const String editProfile = "/edit-profile";
 }

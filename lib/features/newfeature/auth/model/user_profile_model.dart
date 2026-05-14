@@ -3,6 +3,7 @@ class UserProfileData {
   final String name;
   final String email;
   final int? age;
+  final String language;
   final String profileImage;
   final bool isApproved;
   final String status;
@@ -16,6 +17,7 @@ class UserProfileData {
     required this.profileImage,
     required this.isApproved,
     this.age,
+    this.language = '',
     this.status = 'offline',
     this.timezone = '',
     StaffCoins? staffCoins,
@@ -29,6 +31,7 @@ class UserProfileData {
       age: json['age'] is int
           ? json['age'] as int
           : int.tryParse(json['age']?.toString() ?? ''),
+      language: json['language']?.toString() ?? '',
       profileImage: json['profileImage']?.toString() ?? '',
       isApproved: json['isApproved'] == true,
       status: json['status']?.toString() ?? 'offline',
