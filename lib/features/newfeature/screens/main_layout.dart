@@ -40,6 +40,9 @@ class _MainLayoutState extends State<MainLayout> {
         _authController.fetchRecentCalls(refresh: true);
         break;
       case 1: // Calls
+        // Re-check login on every tab so an admin block takes effect promptly
+        // (without the staff needing to close and reopen the app).
+        _authController.checkIsLogin();
         _authController.fetchCallHistory(refresh: true);
         break;
       case 2: // Profile

@@ -11,6 +11,7 @@ import '../../../../local_storage/shared_pref.dart';
 import '../../../../routes/custom_navigator.dart';
 import '../../../../routes/route_path.dart';
 import '../../../../services/call_permission_service.dart';
+import '../../../../services/exceptions.dart';
 import '../../../../services/socket_service.dart';
 import '../../../../services/zego_call_service.dart';
 import '../../../../utils/enum.dart';
@@ -64,6 +65,15 @@ class AuthController extends GetxController {
 
   final ImagePicker _imagePicker = ImagePicker();
 
+  // HTTP / responseCode returned by the backend when an account has been
+  // blocked from the admin panel.
+  static const int _blockedStatusCode = 423;
+
+  // Guards against stacking multiple "account blocked" dialogs — checkIsLogin
+  // fires on every tab switch, so a blocked staff could otherwise trigger it
+  // many times in a row.
+  bool _blockedDialogShown = false;
+
   @override
   void onInit() {
     super.onInit();
@@ -113,22 +123,32 @@ class AuthController extends GetxController {
 
         // Check isApproved via isLogin API
         final isValid = await checkIsLogin();
+        // If the account was blocked, checkIsLogin already showed the dialog
+        // and is handling navigation to the login screen — don't navigate on.
+        if (_blockedDialogShown) return;
         if (isValid && userProfile.value?.isApproved == true) {
           CustomNavigator.pushCompleteReplacement(RoutePath.bottomNav);
         } else {
           CustomNavigator.pushCompleteReplacement(RoutePath.approval);
         }
       } else {
+        // Blocked accounts come back here with responseCode 423 (HTTP 200
+        // transport); the message is already user-facing, so just show it.
         apiCallStatus.value = ApiCallStatus.error;
         Fluttertoast.showToast(msg: response.message);
       }
     } catch (e) {
       apiCallStatus.value = ApiCallStatus.error;
-      Fluttertoast.showToast(msg: e.toString());
+      Fluttertoast.showToast(msg: _errorMessage(e));
     } finally {
       isLoading.value = false;
     }
   }
+
+  // Pulls a user-facing string out of whatever was thrown by the network
+  // layer — ApiException carries a clean message; fall back to toString().
+  String _errorMessage(Object e) =>
+      e is ApiException ? e.message : e.toString();
 
   Future<void> signup() async {
     if (signupNameController.text.trim().isEmpty ||
@@ -213,6 +233,13 @@ class AuthController extends GetxController {
     try {
       final response = await AuthRepository.isLogin();
 
+      // Account blocked by admin — backend returns the block as a 423 in the
+      // body's responseCode (HTTP 200 transport). Show the dialog and log out.
+      if (response.responseCode == _blockedStatusCode) {
+        _handleBlockedAccount(response.message);
+        return false;
+      }
+
       if (response.success && response.data != null) {
         final Map<String, dynamic> dataMap =
             response.data as Map<String, dynamic>;
@@ -256,8 +283,102 @@ class AuthController extends GetxController {
         return true;
       }
       return false;
-    } catch (_) {
+    } catch (e) {
+      // Account blocked by admin — backend may instead surface 423 as the HTTP
+      // status code (DioException path). Handle that here too.
+      if (e is ApiException && e.statusCode == _blockedStatusCode) {
+        _handleBlockedAccount(e.message);
+      }
       return false;
+    }
+  }
+
+  // Shows a blocking dialog explaining the account was blocked, then logs the
+  // staff out (clears session + socket/Zego) and drops them on the login
+  // screen. Idempotent for the session via [_blockedDialogShown].
+  void _handleBlockedAccount(String message) {
+    if (_blockedDialogShown) return;
+    _blockedDialogShown = true;
+
+    Get.dialog(
+      Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: Colors.red.shade50,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.block_rounded,
+                  color: Colors.red,
+                  size: 28,
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Account Blocked',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                message.isNotEmpty
+                    ? message
+                    : 'Your account has been blocked. Please contact support.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () async {
+                    if (Get.isDialogOpen ?? false) Get.back();
+                    // Mark the staff offline before logging out — otherwise the
+                    // backend keeps them flagged "online" and routing calls.
+                    await _forceOffline();
+                    await _clearSessionAndNavigate();
+                    _blockedDialogShown = false;
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryBlue,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  child: const Text('OK'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      barrierDismissible: false,
+    );
+  }
+
+  // Best-effort: flip the backend status to offline before a forced logout so
+  // a blocked staff isn't left showing "online". Failures (incl. the account
+  // already being blocked) are swallowed — they must not stall the logout.
+  Future<void> _forceOffline() async {
+    try {
+      await AuthRepository.updateProfile({'status': 'offline'});
+    } catch (_) {
+      // Ignored — we're logging out regardless.
+    } finally {
+      isOnlineStatus.value = false;
     }
   }
 

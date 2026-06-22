@@ -149,12 +149,24 @@ class BaseClient {
               : _handleError(UndefinedException());
         case DioExceptionType.badResponse:
           if (onError != null) {
+            // Preserve a readable message and the HTTP status code so callers
+            // can react to specific codes (e.g. 423 = account blocked by
+            // admin). The raw body is a Map, so never pass it directly as the
+            // message — pull out the server message and keep the status code.
+            final dynamic resBody = error.response?.data;
+            String resMessage = "Unknown Error";
+            if (resBody is Map) {
+              resMessage = (resBody['message'] ?? resBody['msg'] ?? resMessage)
+                  .toString();
+            } else if (resBody is String && resBody.isNotEmpty) {
+              resMessage = resBody;
+            }
             onError(
               Right(
                 FetchDataException(
-                  error.response != null
-                      ? error.response!.data
-                      : "Unknown Error",
+                  resMessage,
+                  error.response,
+                  error.response?.statusCode,
                 ),
               ),
             );
