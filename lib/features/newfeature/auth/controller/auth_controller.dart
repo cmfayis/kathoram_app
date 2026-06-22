@@ -239,8 +239,13 @@ class AuthController extends GetxController {
             userName: userProfile.value!.name,
           );
 
+          // Register resync callback BEFORE connecting so any reconnect
+          // (including the first one) triggers a state refresh — events
+          // emitted while we were offline are not buffered by socket.io.
+          SocketService.instance.onReconnected = _resyncStateAfterReconnect;
+
           // Connect to backend socket to receive INCOMING_CALL events
-          SocketService.connect(
+          SocketService.instance.connect(
             staffId: userProfile.value!.id,
             staffName: userProfile.value!.name,
           );
@@ -630,9 +635,25 @@ class AuthController extends GetxController {
     CustomNavigator.pushCompleteReplacement(RoutePath.approval);
   }
 
+  // Called after the socket reconnects from any drop (network loss, OS-
+  // killed TCP socket on background→foreground, etc.). socket.io does not
+  // buffer events emitted while we were offline, so we must refetch the
+  // REST state that the socket would otherwise keep up to date:
+  //   - staff profile / online status
+  //   - today's recent calls / earnings
+  //   - call history
+  void _resyncStateAfterReconnect() {
+    debugPrint('[AuthController] Socket reconnected — resyncing REST state');
+    // Fire-and-forget; failures are already toasted inside each fetcher.
+    checkIsLogin();
+    fetchRecentCalls(refresh: true);
+    fetchCallHistory(refresh: true);
+  }
+
   Future<void> _clearSessionAndNavigate() async {
     // Disconnect socket and ZegoCloud so we stop receiving calls
-    SocketService.disconnect();
+    SocketService.instance.onReconnected = null;
+    SocketService.instance.disconnect();
     await ZegoCallService.instance.onUserLogout();
     await MySharedPref.clear();
     Get.offAllNamed(RoutePath.signIn);

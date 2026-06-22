@@ -1,16 +1,24 @@
 class ApiConstants {
-  static const baseUrl = 'http://13.206.185.19/';
+  static const String baseUrl = 'http://13.206.185.19/';
 
   static String refreshToken = "";
 
-  static const String login = 'api/v1/staff/login';
-  static const String signup = 'api/v1/staff/signup';
-  static const String isLogin = 'api/v1/staff/is-login';
-  static const String logout = 'api/v1/staff/logout';
-  static const String deleteAccount = 'api/v1/staff/delete';
-  static const String fileupload = 'api/v1/staff/file/upload';
-  static const String uploadFile = 'api/v1/staff/file/upload';
-  static const String updateProfile = 'api/v1/staff/update';
-  static const String callHistory = 'api/v1/staff/call-history';
-  static const String recentCalls = 'api/v1/staff/recent-calls';
+  // Common Base Path
+  static const String staffBase = 'api/v1/staff/';
+
+  // Auth APIs
+  static const String login = '${staffBase}login';
+  static const String signup = '${staffBase}signup';
+  static const String isLogin = '${staffBase}is-login';
+  static const String logout = '${staffBase}logout';
+  static const String deleteAccount = '${staffBase}delete';
+  static const String updateProfile = '${staffBase}update';
+
+  // File Upload APIs
+  static const String fileUpload = '${staffBase}file/upload';
+  static const String uploadFile = fileUpload;
+
+  // Call APIs
+  static const String callHistory = '${staffBase}call-history';
+  static const String recentCalls = '${staffBase}recent-calls';
 }

@@ -89,7 +89,7 @@ class AuthRepository {
     late ApiBaseModel response;
 
     await BaseClient.shared.safeApiCall(
-      ApiConstants.fileupload,
+      ApiConstants.fileUpload,
       RequestType.put,
       data: {'fileName': fileName, 'fileType': fileType},
       onSuccess: (s) {
