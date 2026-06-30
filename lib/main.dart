@@ -79,7 +79,7 @@ class KathoramApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return GetMaterialApp(
       navigatorKey: NavigatorKeyHelper.navigatorKey,
-      title: 'Kathoram Agent App',
+      title: 'Kathoram Agent',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.blue,

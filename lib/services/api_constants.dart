@@ -1,5 +1,7 @@
 class ApiConstants {
-  static const String baseUrl = 'http://13.206.185.19/';
+  // static const String baseUrl = 'http://13.206.185.19/';
+  static const String baseUrl = 'https://admin.kathoram.coresports.co.in/';
+
 
   static String refreshToken = "";
 
@@ -21,4 +23,7 @@ class ApiConstants {
   // Call APIs
   static const String callHistory = '${staffBase}call-history';
   static const String recentCalls = '${staffBase}recent-calls';
+
+  // App version / maintenance check
+  static const String currentVersion = 'api/v1/user/current/version';
 }

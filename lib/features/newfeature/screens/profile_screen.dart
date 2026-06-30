@@ -11,10 +11,10 @@ class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
   // TODO: Update these URLs with your actual website links
-  static const String _privacyPolicyUrl = 'https://kathoram.com/privacy-policy';
-  static const String _termsUrl = 'https://kathoram.com/terms-and-conditions';
+  static const String _privacyPolicyUrl = 'https://coresports.co.in/privacy-policy';
+  static const String _termsUrl = 'https://coresports.co.in/terms-conditions';
   // TODO: Update with your actual support WhatsApp number (with country code, no +)
-  static const String _supportWhatsAppNumber = '911234567890';
+  static const String _supportWhatsAppNumber = '919061255179';
   static const String _supportMessage =
       'Hi, I need help with the Kathoram app.';
 
