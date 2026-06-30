@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:screen_protector/screen_protector.dart';
 import 'package:kathoram/firebase_options.dart';
 import 'package:kathoram/services/firebase_fcm.dart';
 import 'package:zego_uikit_prebuilt_call/zego_uikit_prebuilt_call.dart';
@@ -34,6 +35,14 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Block screenshots & screen recording app-wide.
+  // Android: reinforces native FLAG_SECURE set in MainActivity.
+  // iOS: applies the secure-layer technique (captures come out black)
+  //      plus app-switcher privacy (blurred preview).
+  await ScreenProtector.preventScreenshotOn();
+  await ScreenProtector.protectDataLeakageWithBlur();
+
   await MySharedPref.init();
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
