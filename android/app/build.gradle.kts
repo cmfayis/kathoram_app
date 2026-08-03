@@ -76,4 +76,10 @@ dependencies {
     )
 
     implementation("im.zego:zpns-fcm:2.8.0")
+
+    // Meta (Facebook) SDK — install attribution + app-launch tracking only.
+    // facebook-core is the minimal artifact: it self-initializes via
+    // FacebookInitProvider and pulls in the Play Install Referrer library.
+    // Do NOT swap this for facebook-android-sdk (that adds Login/Share/Gaming).
+    implementation("com.facebook.android:facebook-core:18.3.0")
 }

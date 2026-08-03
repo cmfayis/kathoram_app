@@ -63,6 +63,26 @@
             android:name="com.google.firebase.messaging.default_notification_icon"
             android:resource="@mipmap/ic_launcher" />
 
+        <!-- ===== Meta (Facebook) SDK — install attribution & app-launch only =====
+             The SDK self-initialises through com.facebook.internal.FacebookInitProvider
+             (declared in the facebook-core AAR and merged in automatically), so no
+             Application/Activity code is required. These four entries are all it reads. -->
+        <meta-data
+            android:name="com.facebook.sdk.ApplicationId"
+            android:value="@string/facebook_app_id" />
+        <meta-data
+            android:name="com.facebook.sdk.ClientToken"
+            android:value="@string/facebook_client_token" />
+        <!-- Auto-logs MOBILE_APP_INSTALL (once) and fb_mobile_activate_app (every launch/foreground) -->
+        <meta-data
+            android:name="com.facebook.sdk.AutoLogAppEventsEnabled"
+            android:value="true" />
+        <!-- Collects the Google Advertising ID (GAID) so Meta can attribute the install -->
+        <meta-data
+            android:name="com.facebook.sdk.AdvertiserIDCollectionEnabled"
+            android:value="true" />
+        <!-- ===== End Meta SDK ===== -->
+
         <!-- Receiver to auto-start on device boot (for offline push) -->
         <receiver
             android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver"
