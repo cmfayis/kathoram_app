@@ -1,7 +1,7 @@
 class ApiConstants {
   // static const String baseUrl = 'http://13.206.185.19/';
-  static const String baseUrl = 'https://admin.kathoram.coresports.co.in/';
-
+  // static const String baseUrl = 'https://admin.kathoram.coresports.co.in/';
+  static const baseUrl = 'http://3.7.254.77/';
 
   static String refreshToken = "";
 
